@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export function calcTileType(index, boardSize) {
   // TODO: write logic here
   return 'center';

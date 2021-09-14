@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable class-methods-use-this */
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
