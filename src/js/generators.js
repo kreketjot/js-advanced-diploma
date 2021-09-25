@@ -1,26 +1,33 @@
-/* eslint-disable no-unused-vars */
+import PositionedCharacter from './PositionedCharacter';
+
 /**
  * Generates random characters
  *
  * @param allowedTypes iterable of classes
  * @param maxLevel max character level
- * @returns Character type children (ex. Magician, Bowman, etc)
+ * @param posX has min and max allowed X positions
+ * @param mapSize size of map
+ * @returns Positioned Character
  */
-export function* characterGenerator(allowedTypes, maxLevel) {
+export function* characterGenerator(allowedTypes, maxLevel, posX, mapSize) {
   const types = [...allowedTypes];
-  const rand = (max) => Math.floor(Math.random() * max);
+  const rand = (max, min = 0) => min + Math.floor(Math.random() * max);
   while (true) {
+    // create character
     const randType = rand(types.length);
-    const randLevel = rand(types.maxLevel) + 1;
-    yield new types[randType](randLevel);
+    const randLevel = rand(maxLevel + 1, 1);
+    const char = new types[randType](randLevel);
+    // calculate position
+    const position = rand(mapSize) * mapSize + rand(posX.max + 1, posX.min);
+    yield new PositionedCharacter(char, position);
   }
 }
 
-export function generateTeam(allowedTypes, maxLevel, characterCount) {
-  const types = [];
+export function generateTeam(allowedTypes, maxLevel, characterCount, posX, mapSize) {
+  const team = [];
   for (let i = 0; i < characterCount; i++) {
-    const type = characterGenerator(allowedTypes, maxLevel).next();
-    types.push(type);
+    const posChar = characterGenerator(allowedTypes, maxLevel, posX, mapSize).next();
+    team.push(posChar);
   }
-  return types;
+  return team;
 }
