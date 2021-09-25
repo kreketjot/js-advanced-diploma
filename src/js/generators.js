@@ -9,24 +9,29 @@ import PositionedCharacter from './PositionedCharacter';
  * @param mapSize size of map
  * @returns Positioned Character
  */
-export function* characterGenerator(allowedTypes, maxLevel, posX, mapSize) {
+export function* characterGenerator(allowedTypes, maxLevel, { min, max }, mapSize) {
   const types = [...allowedTypes];
-  const rand = (max, min = 0) => min + Math.floor(Math.random() * max);
+  const rand = (sup, start = 0) => {
+    const r = start + Math.floor(Math.random() * (sup - start));
+    return r;
+  };
   while (true) {
     // create character
     const randType = rand(types.length);
     const randLevel = rand(maxLevel + 1, 1);
     const char = new types[randType](randLevel);
     // calculate position
-    const position = rand(mapSize) * mapSize + rand(posX.max + 1, posX.min);
+    const y = rand(mapSize);
+    const x = rand(max + 1, min);
+    const position = y * mapSize + x;
     yield new PositionedCharacter(char, position);
   }
 }
 
-export function generateTeam(allowedTypes, maxLevel, characterCount, posX, mapSize) {
+export function generateTeam(allowedTypes, maxLevel, characterCount, { min, max }, mapSize) {
   const team = [];
   for (let i = 0; i < characterCount; i++) {
-    const posChar = characterGenerator(allowedTypes, maxLevel, posX, mapSize).next();
+    const posChar = characterGenerator(allowedTypes, maxLevel, { min, max }, mapSize).next();
     team.push(posChar.value);
   }
   return team;

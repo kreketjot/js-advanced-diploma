@@ -21,7 +21,7 @@ export default class Team {
         max = 1;
         break;
       case 'undead':
-        max = mapSize;
+        max = mapSize - 1;
         break;
       default:
         max = 1;
