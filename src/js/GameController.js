@@ -7,6 +7,10 @@ export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
+    this.positions = [];
+    // binding
+    this.onCellEnter = this.onCellEnter.bind(this);
+    this.onCellLeave = this.onCellLeave.bind(this);
   }
 
   init() {
@@ -27,6 +31,8 @@ export default class GameController {
     this.gamePlay.addNewGameListener(newGame);
     this.gamePlay.addNewGameListener(update);
     // TODO: add event listeners to gamePlay events
+    this.gamePlay.addCellEnterListener(this.onCellEnter);
+    this.gamePlay.addCellLeaveListener(this.onCellLeave);
     // TODO: load saved stated from stateService
   }
 
@@ -35,10 +41,22 @@ export default class GameController {
   }
 
   onCellEnter(index) {
-    // TODO: react to mouse enter
+    const char = this.getCharacter(index);
+    if (char === undefined) {
+      return;
+    }
+    const {
+      level, attack, defence, health,
+    } = char.character;
+    const msg = `\u{1F396}${level} \u{2694}${attack} \u{1F6E1}${defence} \u{2764}${health}`;
+    this.gamePlay.showCellTooltip(msg, index);
   }
 
   onCellLeave(index) {
-    // TODO: react to mouse leave
+    this.gamePlay.hideCellTooltip(index);
+  }
+
+  getCharacter(index) {
+    return this.positions.find((char) => char.position === index);
   }
 }
