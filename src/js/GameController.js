@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable class-methods-use-this */
 import themes from './themes';
+import Team from './Team';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -9,7 +10,19 @@ export default class GameController {
   }
 
   init() {
+    this.team1 = [];
+    this.team2 = [];
+    const newGame = () => {
+      const level = 1;
+      const count = level + 1;
+      const mapSize = this.gamePlay.boardSize;
+      this.team1 = new Team('generic', level, count, mapSize);
+      this.team2 = new Team('undead', level, count, mapSize);
+    };
+    this.positions = [...this.team1, ...this.team2];
     this.gamePlay.drawUi(themes.lvl1);
+    this.gamePlay.addNewGameListener(newGame);
+    this.gamePlay.addNewGameListener(() => this.gamePlay.redrawPosition(this.positions));
     // TODO: add event listeners to gamePlay events
     // TODO: load saved stated from stateService
   }
