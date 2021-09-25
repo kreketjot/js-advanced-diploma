@@ -1,43 +1,62 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable class-methods-use-this */
-import themes from './themes';
 import Team from './Team';
+import GameState from './GameState';
+import GamePlay from './GamePlay';
+import types from './Characters/types';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.positions = [];
+    this.state = new GameState();
+    this.selected = null;
+
     // binding
     this.onCellEnter = this.onCellEnter.bind(this);
     this.onCellLeave = this.onCellLeave.bind(this);
+    this.onCellClick = this.onCellClick.bind(this);
+    this.newGame = this.newGame.bind(this);
+    this.update = this.update.bind(this);
   }
 
   init() {
     this.team1 = [];
     this.team2 = [];
-    const newGame = () => {
-      const level = 1;
-      const count = level + 1;
-      const mapSize = this.gamePlay.boardSize;
-      this.team1 = new Team('generic', level, count, mapSize);
-      this.team2 = new Team('undead', level, count, mapSize);
-    };
-    const update = () => {
-      this.positions = [...this.team1, ...this.team2];
-      this.gamePlay.redrawPositions(this.positions);
-    };
-    this.gamePlay.drawUi(themes.lvl1);
-    this.gamePlay.addNewGameListener(newGame);
-    this.gamePlay.addNewGameListener(update);
-    // TODO: add event listeners to gamePlay events
+
+    this.gamePlay.drawUi(this.state.getTheme());
+
+    // new game
+    this.gamePlay.addNewGameListener(this.newGame);
+    this.gamePlay.addNewGameListener(this.update);
+
+    // cells
     this.gamePlay.addCellEnterListener(this.onCellEnter);
     this.gamePlay.addCellLeaveListener(this.onCellLeave);
+    this.gamePlay.addCellClickListener(this.onCellClick);
+
     // TODO: load saved stated from stateService
   }
 
   onCellClick(index) {
-    // TODO: react to click
+    if (this.state.turn) {
+      GamePlay.showError('Дождитесь своего хода');
+      return;
+    }
+
+    const char = this.getCharacter(index);
+    if (char === undefined) {
+      GamePlay.showError('Необходимо выбрать персонажа');
+      return;
+    }
+    if (!types.generic.some(type => char.character instanceof type)) {
+      GamePlay.showError('Необходимо выбрать своего персонажа');
+      return;
+    }
+
+    if (this.selected !== null) {
+      this.gamePlay.deselectCell(this.selected);
+    }
+    this.selected = index;
+    this.gamePlay.selectCell(index);
   }
 
   onCellEnter(index) {
@@ -57,6 +76,23 @@ export default class GameController {
   }
 
   getCharacter(index) {
-    return this.positions.find((char) => char.position === index);
+    return this.state.positions.find((char) => char.position === index);
+  }
+
+  newGame() {
+    const level = 1;
+    const count = level + 1;
+    const mapSize = this.gamePlay.boardSize;
+    const team1 = new Team('generic', level, count, mapSize);
+    const team2 = new Team('undead', level, count, mapSize);
+    this.state = new GameState([...team1, ...team2]);
+    if (this.selected !== null) {
+      this.gamePlay.deselectCell(this.selected);
+      this.selected = null;
+    }
+  }
+
+  update() {
+    this.gamePlay.redrawPositions(this.state.positions);
   }
 }
