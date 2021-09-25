@@ -1,4 +1,5 @@
 import types from './Characters/types';
+import Magician from './Characters/generic/Magician';
 import { generateTeam } from './generators';
 
 export default class Team {
@@ -15,7 +16,7 @@ export default class Team {
     switch (type) {
       case 'generic':
         if (level === 1) {
-          allowedTypes = allowedTypes.filter(typeChar => typeChar !== 'magician');
+          allowedTypes = allowedTypes.filter(typeChar => typeChar !== Magician);
         }
         max = 1;
         break;
