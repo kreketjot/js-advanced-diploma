@@ -27,7 +27,7 @@ export function generateTeam(allowedTypes, maxLevel, characterCount, posX, mapSi
   const team = [];
   for (let i = 0; i < characterCount; i++) {
     const posChar = characterGenerator(allowedTypes, maxLevel, posX, mapSize).next();
-    team.push(posChar);
+    team.push(posChar.value);
   }
   return team;
 }

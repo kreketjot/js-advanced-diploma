@@ -19,10 +19,13 @@ export default class GameController {
       this.team1 = new Team('generic', level, count, mapSize);
       this.team2 = new Team('undead', level, count, mapSize);
     };
-    this.positions = [...this.team1, ...this.team2];
+    const update = () => {
+      this.positions = [...this.team1, ...this.team2];
+      this.gamePlay.redrawPositions(this.positions);
+    };
     this.gamePlay.drawUi(themes.lvl1);
     this.gamePlay.addNewGameListener(newGame);
-    this.gamePlay.addNewGameListener(() => this.gamePlay.redrawPosition(this.positions));
+    this.gamePlay.addNewGameListener(update);
     // TODO: add event listeners to gamePlay events
     // TODO: load saved stated from stateService
   }
