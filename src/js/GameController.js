@@ -70,7 +70,7 @@ export default class GameController {
     // empty cell
     if (char === undefined) {
       if (this.selected !== null) {
-        this.setCursor(index, 'speed', 'green', cursors.pointer, cursors.notallowed);
+        this.setMoveCursor(index);
       }
       return;
     }
@@ -86,19 +86,50 @@ export default class GameController {
     if (types.generic.some(type => char.character instanceof type)) { // ally
       this.gamePlay.setCursor(cursors.pointer);
     } else { // enemy
-      this.setCursor(index, 'attackRange', 'red', cursors.crosshair, cursors.notallowed);
+      this.setAttackCursor(index);
     }
   }
 
-  setCursor(index, action, color, actionCursor, defaultCursor) {
+  setMoveCursor(index) {
+    if (this.canMove(index)) {
+      this.gamePlay.setCursor(cursors.pointer);
+      this.gamePlay.selectCell(index, 'green');
+    } else {
+      this.gamePlay.setCursor(cursors.notallowed);
+    }
+  }
+
+  canMove(index) {
+    if (this.selected === null) {
+      return false;
+    }
     const char = this.getCharacter(this.selected);
     const distance = this.gamePlay.getDistance(index, this.selected);
-    if (distance > char.character[action]) {
-      this.gamePlay.setCursor(defaultCursor);
-    } else {
-      this.gamePlay.setCursor(actionCursor);
-      this.gamePlay.selectCell(index, color);
+    if (distance > char.character.speed) {
+      return false;
     }
+    return true;
+  }
+
+  setAttackCursor(index) {
+    if (this.canAttack(index)) {
+      this.gamePlay.setCursor(cursors.crosshair);
+      this.gamePlay.selectCell(index, 'red');
+    } else {
+      this.gamePlay.setCursor(cursors.notallowed);
+    }
+  }
+
+  canAttack(index) {
+    if (this.selected === null) {
+      return false;
+    }
+    const char = this.getCharacter(this.selected);
+    const distance = this.gamePlay.getDistance(index, this.selected);
+    if (distance > char.character.attackRange) {
+      return false;
+    }
+    return true;
   }
 
   onCellLeave(index) {
