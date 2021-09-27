@@ -18,6 +18,7 @@
             "WithStatement"
         ],
         "no-plusplus": "off",
-        "arrow-parens": "off"
+        "arrow-parens": "off",
+        "no-underscore-dangle": "off"
     }
 }
