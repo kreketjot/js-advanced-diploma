@@ -34,3 +34,15 @@ export function calcHealthLevel(health) {
 
   return 'high';
 }
+
+export function calcDistance(a, b, size) {
+  const ax = a % size;
+  const ay = Math.trunc(a / size);
+  const bx = b % size;
+  const by = Math.trunc(b / size);
+
+  const dx = Math.abs(ax - bx);
+  const dy = Math.abs(ay - by);
+
+  return Math.max(dx, dy);
+}
