@@ -32,7 +32,11 @@ export function generateTeam(allowedTypes, maxLevel, characterCount, { min, max 
   const team = [];
   for (let i = 0; i < characterCount; i++) {
     const posChar = characterGenerator(allowedTypes, maxLevel, { min, max }, mapSize).next();
-    team.push(posChar.value);
+    if (team.some(char => char.position === posChar.value.position)) {
+      i--;
+    } else {
+      team.push(posChar.value);
+    }
   }
   return team;
 }
