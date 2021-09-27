@@ -10,6 +10,7 @@ export default class GameController {
     this.stateService = stateService;
     this.state = new GameState();
     this.selected = null;
+    this.freeze = false;
 
     // binding
     this.onCellEnter = this.onCellEnter.bind(this);
@@ -38,28 +39,69 @@ export default class GameController {
   }
 
   onCellClick(index) {
+    if (this.freeze) {
+      GamePlay.showMessage('Дождись окончания действия!');
+      return;
+    }
+
     this.gamePlay.setCursor(cursors.auto);
 
+    // computer's turn
     if (this.state.turn) {
-      GamePlay.showError('Дождитесь своего хода');
+      GamePlay.showError('Дождись своего хода');
       return;
     }
 
-    const char = this.getCharacter(index);
-    if (char === undefined) {
-      GamePlay.showError('Необходимо выбрать персонажа');
-      return;
-    }
-    if (!types.generic.some(type => char.character instanceof type)) {
-      GamePlay.showError('Необходимо выбрать своего персонажа');
+    // player's turn
+    // clicked selected character
+    if (this.selected === index) {
       return;
     }
 
-    if (this.selected !== null) {
+    // get clicked character
+    const positionedCharacter = this.getCharacter(index);
+
+    // not character clicked
+    if (positionedCharacter === undefined) {
+      // no selected character
+      if (this.selected === null) {
+        GamePlay.showError('Выбери персонажа');
+        // move
+      } else if (this.canMove(index)) {
+        this.gamePlay.deselectCell(this.selected);
+        this.gamePlay.deselectCell(index);
+        this.move(index);
+      }
+      return;
+    }
+
+    // clicked character
+    // ally
+    if (GameController.isAlly(positionedCharacter)) {
+      // reselect
+      if (this.selected !== null) {
+        this.gamePlay.deselectCell(this.selected);
+      }
+      // new select
+      this.gamePlay.selectCell(index);
+      this.selected = index;
+      return;
+    }
+
+    // enemy
+    if (!this.selected) {
+      GamePlay.showError('Выбери своего персонажа');
+      return;
+    }
+
+    // attack enemy
+    if (this.canAttack(index)) {
+      this.attack(positionedCharacter);
+      this.gamePlay.deselectCell(index);
       this.gamePlay.deselectCell(this.selected);
+    } else {
+      GamePlay.showError('Подойди ближе, чтобы атаковать');
     }
-    this.selected = index;
-    this.gamePlay.selectCell(index);
   }
 
   onCellEnter(index) {
@@ -67,6 +109,7 @@ export default class GameController {
       return;
     }
     const char = this.getCharacter(index);
+
     // empty cell
     if (char === undefined) {
       if (this.selected !== null) {
@@ -74,6 +117,7 @@ export default class GameController {
       }
       return;
     }
+
     // character
     const {
       level, attack, defence, health,
@@ -83,11 +127,18 @@ export default class GameController {
     if (this.selected === null) {
       return;
     }
-    if (types.generic.some(type => char.character instanceof type)) { // ally
+    if (GameController.isAlly(char)) { // ally
       this.gamePlay.setCursor(cursors.pointer);
     } else { // enemy
       this.setAttackCursor(index);
     }
+  }
+
+  static isAlly(positionedCharacter) {
+    if (types.generic.some(type => positionedCharacter.character instanceof type)) { // ally
+      return true;
+    }
+    return false;
   }
 
   setMoveCursor(index) {
@@ -100,15 +151,32 @@ export default class GameController {
   }
 
   canMove(index) {
+    // no character to move
     if (this.selected === null) {
       return false;
     }
+
+    // same sell
+    if (this.selected === index) {
+      return false;
+    }
+
+    // check distance
     const char = this.getCharacter(this.selected);
     const distance = this.gamePlay.getDistance(index, this.selected);
     if (distance > char.character.speed) {
       return false;
     }
     return true;
+  }
+
+  move(index) {
+    const char = this.getCharacter(this.selected);
+
+    char.position = index;
+
+    this.update();
+    this.nextTurn();
   }
 
   setAttackCursor(index) {
@@ -121,15 +189,40 @@ export default class GameController {
   }
 
   canAttack(index) {
+    // no character to attack
     if (this.selected === null) {
       return false;
     }
+
+    // check range
     const char = this.getCharacter(this.selected);
     const distance = this.gamePlay.getDistance(index, this.selected);
     if (distance > char.character.attackRange) {
       return false;
     }
     return true;
+  }
+
+  async attack(defender) {
+    const target = defender.character;
+    const attacker = this.getCharacter(this.selected).character;
+    const damage = Math.max(attacker.attack - target.defence, attacker.attack * 0.1);
+
+    // damage
+    target.health -= damage;
+    this.freeze = true;
+    await this.gamePlay.showDamage(defender.position, damage);
+    this.freeze = false;
+
+    // killed
+    if (!target.health) {
+      this.state.positions = this.state.positions.filter(
+        posChar => posChar.position !== defender.position,
+      );
+    }
+
+    this.update();
+    this.nextTurn();
   }
 
   onCellLeave(index) {
@@ -159,5 +252,10 @@ export default class GameController {
 
   update() {
     this.gamePlay.redrawPositions(this.state.positions);
+  }
+
+  nextTurn() {
+    this.selected = null;
+    // this.state.next();
   }
 }
