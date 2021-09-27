@@ -1,4 +1,4 @@
-import { calcHealthLevel, calcTileType } from './utils';
+import { calcHealthLevel, calcTileType, calcDistance } from './utils';
 
 export default class GamePlay {
   constructor() {
@@ -227,5 +227,9 @@ export default class GamePlay {
     if (this.container === null) {
       throw new Error('GamePlay not bind to DOM');
     }
+  }
+
+  getDistance(a, b) {
+    return calcDistance(a, b, this.boardSize);
   }
 }

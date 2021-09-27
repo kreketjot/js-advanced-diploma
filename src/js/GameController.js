@@ -2,6 +2,7 @@ import Team from './Team';
 import GameState from './GameState';
 import GamePlay from './GamePlay';
 import types from './Characters/types';
+import cursors from './cursors';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -37,6 +38,8 @@ export default class GameController {
   }
 
   onCellClick(index) {
+    this.gamePlay.setCursor(cursors.auto);
+
     if (this.state.turn) {
       GamePlay.showError('Дождитесь своего хода');
       return;
@@ -60,19 +63,50 @@ export default class GameController {
   }
 
   onCellEnter(index) {
-    const char = this.getCharacter(index);
-    if (char === undefined) {
+    if (index === this.selected) {
       return;
     }
+    const char = this.getCharacter(index);
+    // empty cell
+    if (char === undefined) {
+      if (this.selected !== null) {
+        this.setCursor(index, 'speed', 'green', cursors.pointer, cursors.notallowed);
+      }
+      return;
+    }
+    // character
     const {
       level, attack, defence, health,
     } = char.character;
     const msg = `\u{1F396}${level} \u{2694}${attack} \u{1F6E1}${defence} \u{2764}${health}`;
     this.gamePlay.showCellTooltip(msg, index);
+    if (this.selected === null) {
+      return;
+    }
+    if (types.generic.some(type => char.character instanceof type)) { // ally
+      this.gamePlay.setCursor(cursors.pointer);
+    } else { // enemy
+      this.setCursor(index, 'attackRange', 'red', cursors.crosshair, cursors.notallowed);
+    }
+  }
+
+  setCursor(index, action, color, actionCursor, defaultCursor) {
+    const char = this.getCharacter(this.selected);
+    const distance = this.gamePlay.getDistance(index, this.selected);
+    if (distance > char.character[action]) {
+      this.gamePlay.setCursor(defaultCursor);
+    } else {
+      this.gamePlay.setCursor(actionCursor);
+      this.gamePlay.selectCell(index, color);
+    }
   }
 
   onCellLeave(index) {
+    this.gamePlay.setCursor(cursors.auto);
     this.gamePlay.hideCellTooltip(index);
+    if (this.selected !== index) {
+      this.gamePlay.deselectCell(index);
+    }
   }
 
   getCharacter(index) {
